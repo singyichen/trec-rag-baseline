@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.e2e/
+runs/*.txt
+data/*.txt
+.DS_Store
