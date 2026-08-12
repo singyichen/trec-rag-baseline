@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TREC RAG 2027 挑戰之路</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --series-1: #2a78d6;       /* 實測 */
+    --seq-250: #86b6ef;        /* 預估 */
+    --seq-300: #6da7ec;
+    --seq-400: #3987e5;
+    --seq-550: #1c5cab;
+    --good: #0ca30c;
+    --good-text: #006300;
+    --accent-soft: rgba(42,120,214,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --series-1: #3987e5;
+      --seq-250: #1c5cab;
+      --seq-300: #256abf;
+      --seq-400: #3987e5;
+      --seq-550: #6da7ec;
+      --good: #0ca30c;
+      --good-text: #0ca30c;
+      --accent-soft: rgba(57,135,229,0.14);
+    }
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: var(--page); }
+  .viz-root {
+    font-family: system-ui, -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 28px clamp(16px, 4vw, 48px) 48px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header h1 { font-size: 24px; font-weight: 700; letter-spacing: .2px; }
+  header .sub { color: var(--text-secondary); font-size: 14px; margin-top: 6px; line-height: 1.6; }
+  .updated { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 22px 0; }
+  .tile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .tile .k { font-size: 12.5px; color: var(--text-secondary); }
+  .tile .v { font-size: 30px; font-weight: 700; margin-top: 6px; line-height: 1.1; }
+  .tile .d { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+  .tile .v .unit { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-left: 3px; }
+  .tile.done .v { color: var(--good-text); }
+
+  section { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; margin-bottom: 16px; }
+  section h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  section .note { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6; }
+
+  /* --- bar chart --- */
+  .barchart { display: grid; grid-template-columns: 190px 1fr; row-gap: 14px; align-items: center; font-size: 13px; }
+  .barchart .lbl { color: var(--text-secondary); padding-right: 12px; text-align: right; line-height: 1.35; }
+  .barchart .lbl b { color: var(--text-primary); display: block; font-size: 13px; }
+  .bar-track { position: relative; height: 26px; }
+  .bar {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0;
+    display: flex; align-items: center; min-width: 2px;
+    transition: opacity .15s;
+  }
+  .bar.measured { background: var(--series-1); }
+  .bar.estimate { background: var(--seq-250); }
+  .bar-track:hover .bar { opacity: .85; }
+  .bar .val {
+    position: absolute; left: calc(100% + 8px); white-space: nowrap;
+    font-size: 12.5px; color: var(--text-primary); font-variant-numeric: tabular-nums;
+  }
+  .bar .val .tag { color: var(--text-muted); }
+  .axisline { grid-column: 2; position: relative; height: 18px; border-top: 1px solid var(--baseline); margin-right: 90px; }
+  .axisline span { position: absolute; top: 3px; transform: translateX(-50%); font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 18px; margin-top: 10px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend .sw { display:inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* --- timeline --- */
+  .timeline { position: relative; margin-top: 8px; }
+  .tl-months { display: grid; grid-template-columns: repeat(16, 1fr); font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
+  .tl-months span { text-align: left; border-left: 1px solid var(--grid); padding-left: 3px; overflow: hidden; white-space: nowrap; }
+  .tl-rows { position: relative; display: flex; flex-direction: column; gap: 8px; }
+  .tl-row { display: grid; grid-template-columns: repeat(16, 1fr); height: 30px; }
+  .tl-bar {
+    border-radius: 6px; display: flex; align-items: center; padding: 0 10px;
+    font-size: 12px; color: #fff; white-space: nowrap; overflow: hidden;
+  }
+  .tl-deadlines { position: relative; height: 46px; margin-top: 10px; }
+  .tl-dot {
+    position: absolute; top: 0; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--text-secondary); text-align: center; line-height: 1.3;
+  }
+  .tl-dot i { width: 9px; height: 9px; border-radius: 50%; background: var(--series-1); border: 2px solid var(--surface-1); box-shadow: 0 0 0 1px var(--series-1); }
+  .tl-now {
+    position: absolute; top: 18px; bottom: 46px; width: 0;
+    border-left: 2px dashed var(--good);
+  }
+  .tl-now span {
+    position: absolute; top: -18px; left: -14px; font-size: 11px; color: var(--good-text); font-weight: 700; white-space: nowrap;
+  }
+
+  /* --- pipeline --- */
+  .pipe { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  .pipe .stage {
+    flex: 1 1 150px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    background: var(--accent-soft); position: relative;
+  }
+  .pipe .stage h3 { font-size: 13px; font-weight: 700; }
+  .pipe .stage p { font-size: 11.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.55; }
+  .pipe .arrow { align-self: center; color: var(--text-muted); font-size: 16px; }
+  .pipe .stage .task { display:inline-block; font-size: 10.5px; font-weight: 700; color: var(--series-1); border: 1px solid var(--series-1); border-radius: 99px; padding: 1px 8px; margin-bottom: 6px; }
+
+  /* --- checklist --- */
+  .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 24px; font-size: 13.5px; }
+  .check { display: flex; gap: 10px; align-items: baseline; padding: 7px 4px; border-bottom: 1px solid var(--grid); line-height: 1.5; }
+  .check .box { font-size: 14px; width: 20px; flex: none; text-align: center; }
+  .check.done { color: var(--text-secondary); }
+  .check.done .box { color: var(--good-text); font-weight: 700; }
+  .check.todo .box { color: var(--text-muted); }
+  .check .when { margin-left: auto; font-size: 11.5px; color: var(--text-muted); white-space: nowrap; padding-left: 10px; }
+
+  footer { font-size: 11.5px; color: var(--text-muted); line-height: 1.7; margin-top: 8px; }
+  footer a { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <div class="wrap">
+    <header>
+      <h1>TREC RAG 2027 挑戰之路</h1>
+      <div class="sub">TREC(NIST 主辦)檢索增強生成賽道:兩個子任務 —— Retrieval(檢索排序)與 RAG(檢索＋有引用的生成)。以歷屆公開資料練習,目標 2027 年正式提交。</div>
+      <div class="updated">最後更新:2026-08-12 · 資料來源:TREC RAG 官網、Anserini 官方 regression、本機實測</div>
+    </header>
+
+    <div class="tiles">
+      <div class="tile done">
+        <div class="k">我的 BM25 baseline(nDCG@20)</div>
+        <div class="v">0.3198</div>
+        <div class="d">與官方 regression 完全一致 ✓<br>301 題 · MS MARCO v2.1 · UMBRELA qrels</div>
+      </div>
+      <div class="tile">
+        <div class="k">2025 排行榜最佳檢索(nDCG@30)</div>
+        <div class="v">0.693</div>
+        <div class="d">4method_merge · 生成迴圈＋多階段 rerank<br>= 接下來要追趕的差距</div>
+      </div>
+      <div class="tile">
+        <div class="k">里程碑進度</div>
+        <div class="v">2<span class="unit">/ 9</span></div>
+        <div class="d">BM25 baseline ✓ · 內部評分流程 ✓</div>
+      </div>
+      <div class="tile">
+        <div class="k">距 2027 CfP(預估 2 月)</div>
+        <div class="v" id="cfp-days">—<span class="unit">天</span></div>
+        <div class="d">報名截止約 5 月底 · 提交約 8 月初</div>
+      </div>
+    </div>
+
+    <section>
+      <h2>檢索品質天梯(nDCG)</h2>
+      <div class="note">深藍=實測,淺藍=預估或他隊結果。前兩列為本機實測(nDCG@20,2024 題目);末列為 2025 排行榜最佳(nDCG@30,不同年份與截斷點,僅供量級對照)。</div>
+      <div class="barchart" id="ladder">
+        <div class="lbl"><b>我的 BM25</b>里程碑 1 · 實測</div>
+        <div class="bar-track"><div class="bar measured" style="width:46.2%"><span class="val">0.3198 <span class="tag">實測 ✓</span></span></div></div>
+        <div class="lbl"><b>＋ Reranker</b>里程碑 2 · 下一步</div>
+        <div class="bar-track"><div class="bar estimate" style="width:65%"><span class="val">~0.45 <span class="tag">預估</span></span></div></div>
+        <div class="lbl"><b>＋ Dense 混合檢索</b>里程碑 2 · 進階</div>
+        <div class="bar-track"><div class="bar estimate" style="width:79.4%"><span class="val">~0.55 <span class="tag">預估</span></span></div></div>
+        <div class="lbl"><b>2025 排行榜最佳</b>4method_merge</div>
+        <div class="bar-track"><div class="bar estimate" style="width:100%"><span class="val">0.693 <span class="tag">官方</span></span></div></div>
+        <div></div>
+        <div class="axisline">
+          <span style="left:0%">0</span><span style="left:28.9%">0.2</span><span style="left:57.7%">0.4</span><span style="left:86.6%">0.6</span>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--series-1)"></span>實測</span>
+        <span><span class="sw" style="background:var(--seq-250)"></span>預估 / 他隊</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>賽事時程(2026/8 → 2027/11)</h2>
+      <div class="note">四個準備階段對齊 TREC 年度節奏(依 2026 年時程推估,以 2027 官方公告為準)。</div>
+      <div class="timeline">
+        <div class="tl-months">
+          <span>8月</span><span>9月</span><span>10月</span><span>11月</span><span>12月</span><span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span><span>8月</span><span>9月</span><span>10月</span><span>11月</span>
+        </div>
+        <div class="tl-rows">
+          <div class="tl-row"><div class="tl-bar" style="grid-column:1/4; background:var(--seq-250); color:var(--text-primary)">① 打基礎:BM25 ✓ · 讀論文</div></div>
+          <div class="tl-row"><div class="tl-bar" style="grid-column:4/7; background:var(--seq-300); color:#fff">② 完整 RAG pipeline</div></div>
+          <div class="tl-row"><div class="tl-bar" style="grid-column:7/11; background:var(--seq-400); color:#fff">③ 對齊 2027 賽制</div></div>
+          <div class="tl-row"><div class="tl-bar" style="grid-column:11/14; background:var(--seq-550); color:#fff">④ 正式參賽</div></div>
+        </div>
+        <div class="tl-now" id="tl-now" style="left:2%"><span>現在</span></div>
+        <div class="tl-deadlines">
+          <div class="tl-dot" style="left:39%"><i></i>CfP 公布<br>2027/2</div>
+          <div class="tl-dot" style="left:60%"><i></i>報名截止<br>2027/5 底</div>
+          <div class="tl-dot" style="left:70.5%"><i></i>測試題目<br>2027/7</div>
+          <div class="tl-dot" style="left:77%"><i></i>提交 runs<br>2027/8 初</div>
+          <div class="tl-dot" style="left:96%"><i></i>TREC 會議<br>2027/11</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>比賽在做什麼:系統 pipeline 與評測</h2>
+      <div class="note">R 任務只比前三格;RAG 任務比整條。評測由 LLM 評判(UMBRELA 相關性、AutoNuggetizer 答案覆蓋率、Support 引用支持度)＋人工校驗。</div>
+      <div class="pipe">
+        <div class="stage"><span class="task">R</span><h3>第一階段檢索</h3><p>BM25 / dense embedding 從數億 segment 撈 top-100(你在這裡 ✓)</p></div>
+        <div class="arrow">→</div>
+        <div class="stage"><span class="task">R</span><h3>Reranking</h3><p>cross-encoder / LLM listwise 重排候選,排行榜前段的關鍵差距</p></div>
+        <div class="arrow">→</div>
+        <div class="stage"><span class="task">RAG</span><h3>生成含引用答案</h3><p>LLM 依據檢索段落生成 grounded 答案,每句標註出處</p></div>
+        <div class="arrow">→</div>
+        <div class="stage"><span class="task">評測</span><h3>自動＋人工評判</h3><p>nDCG(檢索)· nugget 覆蓋率(答案)· 引用支持度(citation)</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>里程碑檢核</h2>
+      <div class="checks">
+        <div class="check done"><span class="box">✓</span>跑通 Pyserini BM25 baseline(2024 資料)<span class="when">2026/8/12</span></div>
+        <div class="check done"><span class="box">✓</span>官方評測工具建立內部評分流程<span class="when">2026/8/12</span></div>
+        <div class="check todo"><span class="box">○</span>dense retrieval + reranking,nDCG 明顯優於 BM25<span class="when">下一步</span></div>
+        <div class="check todo"><span class="box">○</span>完成端到端 RAG pipeline(含引用)<span class="when">2026 Q4</span></div>
+        <div class="check todo"><span class="box">○</span>精讀 ≥ 5 篇歷屆參賽論文並寫成筆記<span class="when">進行中</span></div>
+        <div class="check todo"><span class="box">○</span>系統遷移至 2027 指定語料<span class="when">2027 Q1</span></div>
+        <div class="check todo"><span class="box">○</span>完成 TREC 2027 報名<span class="when">2027/5 底前</span></div>
+        <div class="check todo"><span class="box">○</span>正式提交 runs<span class="when">2027/8 初</span></div>
+        <div class="check todo"><span class="box">○</span>撰寫 notebook paper<span class="when">2027/9–10</span></div>
+      </div>
+    </section>
+
+    <footer>
+      分數說明:nDCG@20 0.3198 = Anserini 官方 BM25 regression(UMBRELA qrels,301 題)· 0.693 = TREC 2025 RAG Overview 最佳檢索(nDCG@30)· 預估值依歷屆隊伍 rerank/dense 的常見增幅,實際以實驗為準。<br>
+      來源:trec-rag.github.io · trec.nist.gov · github.com/castorini/anserini · 本機 runs/run.bm25.rag24.test.txt
+    </footer>
+  </div>
+</div>
+<script>
+  // 距 CfP 天數(以 2027-02-01 為預估)與時間軸「現在」位置(2026-08 → 2027-11 共 16 個月)
+  (function(){
+    var now = new Date();
+    var cfp = new Date(2027, 1, 1);
+    var days = Math.max(0, Math.ceil((cfp - now) / 86400000));
+    var el = document.getElementById('cfp-days');
+    if (el) el.innerHTML = days + '<span class="unit">天</span>';
+    var start = new Date(2026, 7, 1), end = new Date(2027, 11, 1); // 16 個月
+    var frac = Math.min(1, Math.max(0, (now - start) / (end - start)));
+    var nowEl = document.getElementById('tl-now');
+    if (nowEl) nowEl.style.left = (frac * 100).toFixed(1) + '%';
+  })();
+</script>
+</body>
+</html>
