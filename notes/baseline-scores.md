@@ -5,3 +5,4 @@
 | 日期 | run 檔 | 方法 | nDCG@20 | nDCG@100 | Recall@100 | 備註 |
 |---|---|---|---|---|---|---|
 | 2026-08-12 | run.bm25.rag24.test.txt | BM25(k=100) | 0.3198 | 0.2563 | 0.1395 | 對照組;與 Anserini 官方 regression 完全一致 ✅ |
+| 2026-08-12 | run.bm25-bge.rag24.test.txt | BM25 top-100 + bge-reranker-v2-m3 | 0.4707 | 0.2986 | 0.1395 | Recall@100 與 BM25 相同(同一候選集);nDCG@20 +0.15 |
