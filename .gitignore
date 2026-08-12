@@ -4,3 +4,4 @@ __pycache__/
 runs/*.txt
 data/*.txt
 .DS_Store
+embeddings/
