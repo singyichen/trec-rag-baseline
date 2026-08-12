@@ -1,5 +1,12 @@
 # 共用環境設定,由其他腳本 source,不直接執行。
 
+# 專案有 .venv 而目前 shell 尚未啟用任何 venv 時,自動啟用,
+# 避免誤用系統 Python(那裡沒裝 pyserini)。
+if [[ -z "${VIRTUAL_ENV:-}" && -f ".venv/bin/activate" ]]; then
+  # shellcheck disable=SC1091
+  source ".venv/bin/activate"
+fi
+
 # pyserini 1.6 在 import 時會初始化 OpenAI client,沒設環境變數會直接報錯;
 # 我們不用它的 LLM 功能,占位值即可。
 export OPENAI_API_KEY="${OPENAI_API_KEY:-dummy}"
