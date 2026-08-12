@@ -1,3 +1,4 @@
 pyserini>=0.44.0
 ir_measures>=0.3.6
 tqdm
+pytest
