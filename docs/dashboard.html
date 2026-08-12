@@ -157,9 +157,9 @@
 
     <div class="tiles">
       <div class="tile done">
-        <div class="k">我的 BM25 baseline(nDCG@20)</div>
-        <div class="v">0.3198</div>
-        <div class="d">與官方 regression 完全一致 ✓<br>301 題 · MS MARCO v2.1 · UMBRELA qrels</div>
+        <div class="k">我的最佳成績(nDCG@20)</div>
+        <div class="v">0.4707</div>
+        <div class="d">BM25 top-100 ＋ bge-reranker-v2-m3 ✓<br>較 BM25 baseline(0.3198)提升 47%</div>
       </div>
       <div class="tile">
         <div class="k">2025 排行榜最佳檢索(nDCG@30)</div>
@@ -168,8 +168,8 @@
       </div>
       <div class="tile">
         <div class="k">里程碑進度</div>
-        <div class="v">2<span class="unit">/ 9</span></div>
-        <div class="d">BM25 baseline ✓ · 內部評分流程 ✓</div>
+        <div class="v">3<span class="unit">/ 10</span></div>
+        <div class="d">BM25 baseline ✓ · 評分流程 ✓ · Reranking ✓</div>
       </div>
       <div class="tile">
         <div class="k">距 2027 CfP(預估 2 月)</div>
@@ -184,9 +184,9 @@
       <div class="barchart" id="ladder">
         <div class="lbl"><b>我的 BM25</b>里程碑 1 · 實測</div>
         <div class="bar-track"><div class="bar measured" style="width:46.2%"><span class="val">0.3198 <span class="tag">實測 ✓</span></span></div></div>
-        <div class="lbl"><b>＋ Reranker</b>里程碑 2 · 下一步</div>
-        <div class="bar-track"><div class="bar estimate" style="width:65%"><span class="val">~0.45 <span class="tag">預估</span></span></div></div>
-        <div class="lbl"><b>＋ Dense 混合檢索</b>里程碑 2 · 進階</div>
+        <div class="lbl"><b>＋ Reranker</b>里程碑 2 · 實測</div>
+        <div class="bar-track"><div class="bar measured" style="width:67.9%"><span class="val">0.4707 <span class="tag">實測 ✓</span></span></div></div>
+        <div class="lbl"><b>＋ Dense 混合檢索</b>里程碑 3 · 進行中</div>
         <div class="bar-track"><div class="bar estimate" style="width:79.4%"><span class="val">~0.55 <span class="tag">預估</span></span></div></div>
         <div class="lbl"><b>2025 排行榜最佳</b>4method_merge</div>
         <div class="bar-track"><div class="bar estimate" style="width:100%"><span class="val">0.693 <span class="tag">官方</span></span></div></div>
@@ -209,7 +209,7 @@
           <span>8月</span><span>9月</span><span>10月</span><span>11月</span><span>12月</span><span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span><span>8月</span><span>9月</span><span>10月</span><span>11月</span>
         </div>
         <div class="tl-rows">
-          <div class="tl-row"><div class="tl-bar" style="grid-column:1/4; background:var(--seq-250); color:var(--text-primary)">① 打基礎:BM25 ✓ · 讀論文</div></div>
+          <div class="tl-row"><div class="tl-bar" style="grid-column:1/4; background:var(--seq-250); color:var(--text-primary)">① 打基礎:BM25 ✓ · Rerank ✓ · 讀論文</div></div>
           <div class="tl-row"><div class="tl-bar" style="grid-column:4/7; background:var(--seq-300); color:#fff">② 完整 RAG pipeline</div></div>
           <div class="tl-row"><div class="tl-bar" style="grid-column:7/11; background:var(--seq-400); color:#fff">③ 對齊 2027 賽制</div></div>
           <div class="tl-row"><div class="tl-bar" style="grid-column:11/14; background:var(--seq-550); color:#fff">④ 正式參賽</div></div>
@@ -229,9 +229,9 @@
       <h2>比賽在做什麼:系統 pipeline 與評測</h2>
       <div class="note">R 任務只比前三格;RAG 任務比整條。評測由 LLM 評判(UMBRELA 相關性、AutoNuggetizer 答案覆蓋率、Support 引用支持度)＋人工校驗。</div>
       <div class="pipe">
-        <div class="stage"><span class="task">R</span><h3>第一階段檢索</h3><p>BM25 / dense embedding 從數億 segment 撈 top-100(你在這裡 ✓)</p></div>
+        <div class="stage"><span class="task">R</span><h3>第一階段檢索</h3><p>BM25 ✓ / dense embedding 從數億 segment 撈候選(擴深池進行中)</p></div>
         <div class="arrow">→</div>
-        <div class="stage"><span class="task">R</span><h3>Reranking</h3><p>cross-encoder / LLM listwise 重排候選,排行榜前段的關鍵差距</p></div>
+        <div class="stage"><span class="task">R</span><h3>Reranking</h3><p>cross-encoder 重排 ✓(0.4707)· LLM listwise 為後續選項</p></div>
         <div class="arrow">→</div>
         <div class="stage"><span class="task">RAG</span><h3>生成含引用答案</h3><p>LLM 依據檢索段落生成 grounded 答案,每句標註出處</p></div>
         <div class="arrow">→</div>
@@ -244,7 +244,8 @@
       <div class="checks">
         <div class="check done"><span class="box">✓</span>跑通 Pyserini BM25 baseline(2024 資料)<span class="when">2026/8/12</span></div>
         <div class="check done"><span class="box">✓</span>官方評測工具建立內部評分流程<span class="when">2026/8/12</span></div>
-        <div class="check todo"><span class="box">○</span>dense retrieval + reranking,nDCG 明顯優於 BM25<span class="when">下一步</span></div>
+        <div class="check done"><span class="box">✓</span>cross-encoder reranking,nDCG@20 0.4707(+47%)<span class="when">2026/8/12</span></div>
+        <div class="check todo"><span class="box">○</span>dense / hybrid 檢索加深候選池(bge-m3)<span class="when">進行中</span></div>
         <div class="check todo"><span class="box">○</span>完成端到端 RAG pipeline(含引用)<span class="when">2026 Q4</span></div>
         <div class="check todo"><span class="box">○</span>精讀 ≥ 5 篇歷屆參賽論文並寫成筆記<span class="when">進行中</span></div>
         <div class="check todo"><span class="box">○</span>系統遷移至 2027 指定語料<span class="when">2027 Q1</span></div>
@@ -255,8 +256,8 @@
     </section>
 
     <footer>
-      分數說明:nDCG@20 0.3198 = Anserini 官方 BM25 regression(UMBRELA qrels,301 題)· 0.693 = TREC 2025 RAG Overview 最佳檢索(nDCG@30)· 預估值依歷屆隊伍 rerank/dense 的常見增幅,實際以實驗為準。<br>
-      來源:trec-rag.github.io · trec.nist.gov · github.com/castorini/anserini · 本機 runs/run.bm25.rag24.test.txt
+      分數說明:nDCG@20 0.3198 = Anserini 官方 BM25 regression(UMBRELA qrels,301 題)· 0.4707 = 本機實測 BM25 top-100 + bge-reranker-v2-m3 · 0.693 = TREC 2025 RAG Overview 最佳檢索(nDCG@30)· 預估值依歷屆隊伍 rerank/dense 的常見增幅,實際以實驗為準。<br>
+      來源:trec-rag.github.io · trec.nist.gov · github.com/castorini/anserini · 本機 runs/run.bm25.rag24.test.txt、runs/run.bm25-bge.rag24.test.txt
     </footer>
   </div>
 </div>
