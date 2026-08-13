@@ -9,3 +9,4 @@
 | 2026-08-14 | run.bm25-1000.rag24.test.txt | BM25(k=1000,候選池) | — | — | — | Recall@1000 = 0.3467(池天花板) |
 | 2026-08-14 | run.dense100.rag24.test.txt | BM25-1000 → bge-m3 dense top-100 | 0.4679 | 0.3761 | 0.1960 | stage-1;Recall +40% vs BM25 top-100 |
 | 2026-08-14 | run.rrf100.rag24.test.txt | BM25-1000 → RRF(BM25+dense) top-100 | 0.4447 | 0.3787 | 0.2038 | stage-1;Recall 最高,選入精排 |
+| 2026-08-14 | run.final.rag24.test.txt | RRF top-100 + bge-reranker-v2-m3 | 0.5400 | 0.4050 | 0.2038 | 里程碑 3 ✅;vs 里程碑 2 +0.07 |
